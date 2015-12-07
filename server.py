@@ -4,14 +4,25 @@ import gevent
 from gevent import monkey
 app = Flask(__name__)
 
+interval_config = 10000
 @app.route("/")
 def collatz():
     minimum = int(request.args.get('min' ,''))
     maximum = int(request.args.get('max', ''))
+
     if (minimum > maximum) or (maximum > 1000000):
         return format_failure(minimum, maximum)
-    out = handle_collatz(minimum, maximum)
+
+    out = collatz_range(minimum, maximum)
+
     return format_success(minimum, maximum, out)
+
+def collatz_range(minimum, maximum):
+
+    threads = [ gevent.spawn(handle_collatz, interval, min(interval + interval_config, maximum)) for interval in xrange(minimum, maximum, interval_config) ]
+    gevent.joinall(threads)
+
+    return max([thread.value for thread in threads])
 
 def format_failure(minimum, maximum):
     result = {}
@@ -31,30 +42,33 @@ def format_success(minimum, maximum, out):
 
 cycle_count_dict = {1 : 1}
 
-def collatz(n):
+def find_cycle_length(n):
     if cycle_count_dict.has_key(n):
         return cycle_count_dict[n]
     elif n % 2 == 0:
-        cycle_count_dict[n] = collatz(n / 2) + 1
+        cycle_count_dict[n] = find_cycle_length(n / 2) + 1
         return cycle_count_dict[n]
     else:
-        cycle_count_dict[n] = collatz(3 * n + 1) + 1
+        cycle_count_dict[n] = find_cycle_length(3 * n + 1) + 1
         return cycle_count_dict[n]
 
 def handle_collatz(minimum, maximum):
-    '''
-    threads = map(lambda n : gevent.spawn(collatz, n), xrange(minimum, maximum + 1))
-    gevent.joinall(threads)
-    return max([thread.value for thread in threads])
-    '''
     large = 0
     for i in range(minimum, maximum + 1):
-        count = collatz(i)
+        count = find_cycle_length(i)
         if count > large:
             large = count
     return large
 
+def unittests():
+    assert 8 == collatz_range(1, 3)
+    assert 2 == collatz_range(1, 2)
+    assert 179 == collatz_range(1, 1000)
+    assert 525 == collatz_range(1, 1000000)
+
+    print "All tests passed"
 if __name__ == '__main__':
+    unittests()
     monkey.patch_all()
     app.debug = True
     app.run()

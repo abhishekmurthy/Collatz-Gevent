@@ -6,7 +6,7 @@ used to calculate the cycle length and the recursive function is stopped.
 """
 
 import gevent
-collatz_dict = {1 :1}
+collatz_dict = {1 : 1}
 
 def memorized_collatz(n):
     """
