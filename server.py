@@ -1,7 +1,6 @@
 import collatz
-from json import loads, dumps
+from json
 from flask import Flask, request
-import gevent
 from gevent import monkey
 app = Flask(__name__)
 
@@ -23,7 +22,7 @@ def format_failure(minimum, maximum):
     result['maximum'] = maximum
     result['status'] = 'failure'
     result['description'] = 'Minimum has to be lesser than maximum and maximum must be within 10,00,000'
-    return dumps(result)
+    return json.dumps(result)
 
 def format_success(minimum, maximum, out):
     result = {}
@@ -31,7 +30,7 @@ def format_success(minimum, maximum, out):
     result['maximum'] = maximum
     result['Maximum Cycle Count'] = out
     result['status'] = 'success'
-    return dumps(result)
+    return json.dumps(result)
 
 if __name__ == '__main__':
     collatz.precompute_ranges()
